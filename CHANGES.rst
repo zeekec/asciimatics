@@ -4,6 +4,7 @@ CHANGE HISTORY
 LATEST
 ------
 - Added border option to PopupMenu
+- Added a MenuBar
 
 1.15.0
 ------
