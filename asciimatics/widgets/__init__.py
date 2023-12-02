@@ -11,6 +11,7 @@ from asciimatics.widgets.frame import Frame
 from asciimatics.widgets.label import Label
 from asciimatics.widgets.layout import Layout
 from asciimatics.widgets.listbox import ListBox
+from asciimatics.widgets.menubar import MenuBar
 from asciimatics.widgets.multicolumnlistbox import MultiColumnListBox
 from asciimatics.widgets.popupdialog import PopUpDialog
 from asciimatics.widgets.popupmenu import PopupMenu
