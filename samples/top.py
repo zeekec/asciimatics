@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from asciimatics.event import KeyboardEvent
-from asciimatics.widgets import Frame, Layout, MultiColumnListBox, Widget, Label, TextBox
+from asciimatics.widgets import Frame, Layout, MultiColumnListBox, Widget, Label, TextBox, MenuBar
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
 from asciimatics.exceptions import ResizeScreenError, StopApplication
@@ -43,6 +43,32 @@ class DemoFrame(Frame):
         self._sort = 5
         self._reverse = True
 
+        file_menu = [
+            ('Quit', self._quit),
+        ]
+        self._default_sort_menu = [
+            ("PID      ", lambda: self._set_sort_menu(0)),
+            ("USER     ", lambda: self._set_sort_menu(1)),
+            ("NI       ", lambda: self._set_sort_menu(2)),
+            ("VIRT     ", lambda: self._set_sort_menu(3)),
+            ("RSS      ", lambda: self._set_sort_menu(4)),
+            ("CPU%     ", lambda: self._set_sort_menu(5)),
+            ("MEM%     ", lambda: self._set_sort_menu(6)),
+            ("CMD      ", lambda: self._set_sort_menu(7)),
+            ("----------", None),
+            ("Ascending", lambda: self._set_reverse(False)),
+            ("Descending", lambda: self._set_reverse(True)),
+        ]
+
+        menus = [
+            ('File', file_menu),
+            ('Sort', self._default_sort_menu),
+        ]
+        self._menu_bar = MenuBar(frame=self, menus=menus)
+        self.add_layout(self._menu_bar)
+
+        self._set_sort_menu(self._sort)
+
         # Create the basic form layout...
         layout = Layout([1], fill_frame=True)
         self._header = TextBox(1, as_string=True)
@@ -50,7 +76,7 @@ class DemoFrame(Frame):
         self._header.custom_colour = "label"
         self._list = MultiColumnListBox(
             Widget.FILL_FRAME,
-            [">6", 10, ">4", ">7", ">7", ">5", ">5", "100%"],
+            [">9", 10, ">4", ">7", ">7", ">5", ">5", "100%"],
             [],
             titles=["PID", "USER", "NI", "VIRT", "RSS", "CPU%", "MEM%", "CMD"],
             name="mc_list",
@@ -69,23 +95,53 @@ class DemoFrame(Frame):
             self.palette[key] = (Screen.COLOUR_WHITE, Screen.A_BOLD, Screen.COLOUR_BLACK)
         self.palette["title"] = (Screen.COLOUR_BLACK, Screen.A_NORMAL, Screen.COLOUR_WHITE)
 
+    def _set_sort_menu(self, sort_column):
+        self._sort = sort_column
+        self._update_sort_menu()
+
+    def _update_sort_menu(self):
+        sort_menu = self._default_sort_menu.copy()
+
+        item_name  = sort_menu[self._sort][0]
+        item_function = sort_menu[self._sort][1]
+
+        indicator = '+'
+        if self._reverse:
+            indicator = '-'
+
+        sort_menu[self._sort] = (item_name + indicator, item_function)
+
+        self._menu_bar.update_menu_items('Sort', sort_menu)
+
+        self._last_frame = 0
+
+    def _set_reverse(self, direction):
+        self._reverse = direction
+        self._update_sort_menu()
+
     def process_event(self, event):
         # Do the key handling for this Frame.
         if isinstance(event, KeyboardEvent):
             if event.key_code in [ord('q'), ord('Q'), Screen.ctrl("c")]:
-                raise StopApplication("User quit")
+                self._quit()
             elif event.key_code in [ord("r"), ord("R")]:
                 self._reverse = not self._reverse
+                self._update_sort_menu()
             elif event.key_code == ord("<"):
                 self._sort = max(0, self._sort - 1)
+                self._update_sort_menu()
             elif event.key_code == ord(">"):
                 self._sort = min(7, self._sort + 1)
+                self._update_sort_menu()
 
             # Force a refresh for improved responsiveness
             self._last_frame = 0
 
         # Now pass on to lower levels for normal handling of the event.
         return super(DemoFrame, self).process_event(event)
+
+    def _quit(self):
+        raise StopApplication("User quit")
 
     def _update(self, frame_no):
         # Refresh the list view if needed
